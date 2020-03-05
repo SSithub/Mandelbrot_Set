@@ -17,6 +17,10 @@ public class Complex {
     static Complex square(Complex a) {
         return new Complex(Math.pow(a.real, 2) - Math.pow(a.imaginary, 2), 2 * a.real * a.imaginary);
     }
+    
+    double magnitude(){
+        return Math.sqrt(Math.pow(real, 2) + Math.pow(imaginary, 2));
+    }
 
     boolean equals(Complex a) {
         if (real == a.real && imaginary == a.imaginary) {
