@@ -1,10 +1,8 @@
 package mandelbrotset;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import java.util.stream.IntStream;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -14,18 +12,17 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
 public class Mandelbrot extends Application {
 
     double iterations = 20;
-    final double ITERATIONSINCREASERATE = Math.E/2;
+    final double ITERATIONSINCREASERATE = Math.E / 2;
     double scale = .003;
     final double ZOOMRATE = 2;
-    final double WIDTH = Screen.getPrimary().getVisualBounds().getMaxX();
-    final double HEIGHT = Screen.getPrimary().getVisualBounds().getMaxY();
-    WritableImage image = new WritableImage((int) WIDTH, (int) HEIGHT);
-    final ImageView IMAGEVIEW = new ImageView(image);
+    static final double WIDTH = Screen.getPrimary().getVisualBounds().getMaxX();
+    static final double HEIGHT = Screen.getPrimary().getVisualBounds().getMaxY();
+    final WritableImage IMAGE = new WritableImage((int) WIDTH, (int) HEIGHT);
+    final ImageView IMAGEVIEW = new ImageView(IMAGE);
     final Group ROOT = new Group(IMAGEVIEW);
     double initialX;
     double initialY;
@@ -33,6 +30,7 @@ public class Mandelbrot extends Application {
     double offsetY;
     int x = 0;
     int y = 0;
+    static final int DIVIDE = 4;
 //    final Timeline timer = new Timeline(new KeyFrame(Duration.ONE, event -> {
 //        setPixel(x, y);
 //        if (x < WIDTH-1) {
@@ -56,73 +54,109 @@ public class Mandelbrot extends Application {
 //        Complex z = c.clone();
 //        for (int i = 1;; i++) {//Skipped the first iteration
 //            if (z.magnitude() >= 2) {
-//                image.getPixelWriter().setColor(x, y, Color.WHITE);
+//                IMAGE.getPixelWriter().setColor(x, y, Color.WHITE);
 //                break;
 //            } else if (i > iterations) {
-//                image.getPixelWriter().setColor(x, y, Color.BLACK);
+//                IMAGE.getPixelWriter().setColor(x, y, Color.BLACK);
 //                break;
 //            }
 //            z = function(z, c);
 //        }
 //    }
 
-    Complex function(Complex z, Complex c) {
+    static Complex function(Complex z, Complex c) {
         return Complex.add(Complex.square(z), c);
     }
 
-    Image generateImage() {
-        WritableImage image = new WritableImage((int) WIDTH, (int) HEIGHT);
+//    Image generateImage() {
+//        WritableImage IMAGE = new WritableImage((int) WIDTH, (int) HEIGHT);
+//        double centerX = WIDTH / 2 - offsetX;
+//        double centerY = HEIGHT / 2 - offsetY;
+//        for (int x = 0; x < WIDTH; x++) {
+//            for (int y = 0; y < HEIGHT; y++) {
+//                Complex c = new Complex(scale * (x - centerX), scale * (centerY - y));//Converting pixel indexes to coordinates for a complex number
+//                Complex z = c.clone();
+//                for (int i = 1;; i++) {//Skipped the first iteration
+//                    if (z.magnitude() >= 2) {
+//                        IMAGE.getPixelWriter().setColor(x, y, Color.WHITE);
+//                        break;
+//                    } else if (i > iterations) {
+//                        IMAGE.getPixelWriter().setColor(x, y, Color.BLACK);
+//                        break;
+//                    }
+//                    z = function(z, c);
+//                }
+//            }
+//        }
+//        return IMAGE;
+//    }
+//    int t;
+//    Thread[] arr = new Thread[DIVIDE];
+
+    void generateImage() {
         double centerX = WIDTH / 2 - offsetX;
         double centerY = HEIGHT / 2 - offsetY;
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
-                Complex c = new Complex(scale * (x - centerX), scale * (centerY - y));//Converting pixel indexes to coordinates for a complex number
-                Complex z = c.clone();
-                for (int i = 1;; i++) {//Skipped the first iteration
-                    if (z.magnitude() >= 2) {
-                        image.getPixelWriter().setColor(x, y, Color.WHITE);
-                        break;
-                    } else if (i > iterations) {
-                        image.getPixelWriter().setColor(x, y, Color.BLACK);
-                        break;
-                    }
-                    z = function(z, c);
-                }
-            }
+//        for (t = 0; t < DIVIDE; t++) {
+//            arr[t] = new Thread(() -> {
+//                System.out.println(t);
+//                int localt = t;
+//                for (int x = (int) (localt * WIDTH / DIVIDE); x < (localt + 1) * WIDTH / DIVIDE; x++) {
+////                    System.out.println((localt + 1) * WIDTH / DIVIDE);
+//                    for (int y = 0; y < HEIGHT; y++) {
+//                        Complex c = new Complex(scale * (x - centerX), scale * (centerY - y));//Converting pixel indexes to coordinates for a complex number
+//                        Complex z = c.clone();
+//                        for (int i = 1;; i++) {//Skipped the first iteration
+//                            if (z.magnitude() >= 2) {
+//                                IMAGE.getPixelWriter().setColor(x, y, Color.WHITE);
+//                                break;
+//                            } else if (i > iterations) {
+//                                IMAGE.getPixelWriter().setColor(x, y, Color.BLACK);
+//                                break;
+//                            }
+//                            z = function(z, c);
+//                        }
+//                    }
+//                }
+//            });
+//        }
+//        for(int i = 0; i < arr.length; i++){
+//            arr[i].start();
+//        }
+        for(int i = 0; i < DIVIDE; i++){
+            new Loader(i, DIVIDE, IMAGE, WIDTH, HEIGHT, scale, iterations, centerX, centerY).start();
         }
-        return image;
     }
 
     @Override
     public void start(Stage stage) {
-        IMAGEVIEW.setImage(generateImage());
+        generateImage();
         Scene scene = new Scene(ROOT, 0, 0);
         scene.setOnKeyPressed(event -> {
             KeyCode pressed = event.getCode();
             if (pressed == KeyCode.LEFT || pressed == KeyCode.A) {
                 offsetX -= 100;
-                IMAGEVIEW.setImage(generateImage());
+                generateImage();
             } else if (pressed == KeyCode.RIGHT || pressed == KeyCode.D) {
                 offsetX += 100;
-                IMAGEVIEW.setImage(generateImage());
+                generateImage();
             } else if (pressed == KeyCode.UP || pressed == KeyCode.W) {
                 offsetY -= 100;
-                IMAGEVIEW.setImage(generateImage());
+                generateImage();
             } else if (pressed == KeyCode.DOWN || pressed == KeyCode.S) {
                 offsetY += 100;
-                IMAGEVIEW.setImage(generateImage());
+                generateImage();
             } else if (pressed == KeyCode.EQUALS) {
                 scale /= ZOOMRATE;
                 offsetX *= ZOOMRATE;
                 offsetY *= ZOOMRATE;
                 iterations *= ITERATIONSINCREASERATE;
-                IMAGEVIEW.setImage(generateImage());
+                generateImage();
             } else if (pressed == KeyCode.MINUS) {
                 scale *= ZOOMRATE;
                 offsetX /= ZOOMRATE;
                 offsetY /= ZOOMRATE;
                 iterations /= ITERATIONSINCREASERATE;
-                IMAGEVIEW.setImage(generateImage());
+                generateImage();
             }
         });
         stage.setScene(scene);
