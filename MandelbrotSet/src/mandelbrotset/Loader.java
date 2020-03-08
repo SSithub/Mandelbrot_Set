@@ -16,7 +16,6 @@ public class Loader extends Thread {
     final double CENTERY;
 
     public Loader(int instance, int divide, WritableImage image, double width, double height, double scale, double iterations, double centerX, double centerY) {
-//        super("Loader");
         this.INSTANCE = instance;
         WIDTH = width;
         HEIGHT = height;
@@ -36,7 +35,7 @@ public class Loader extends Thread {
                 Complex z = c.clone();
                 for (int i = 1;; i++) {//Skipped the first iteration
                     if (z.magnitude() >= 2) {
-                        IMAGE.getPixelWriter().setColor(x, y, Color.WHITE);
+                        IMAGE.getPixelWriter().setColor(x, y, Color.hsb(220-i, 1, 1));
                         break;
                     } else if (i > ITERATIONS) {
                         IMAGE.getPixelWriter().setColor(x, y, Color.BLACK);
