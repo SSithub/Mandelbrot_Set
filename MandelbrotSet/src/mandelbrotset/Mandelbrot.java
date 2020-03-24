@@ -1,15 +1,11 @@
 package mandelbrotset;
 
-import java.util.stream.IntStream;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
-import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -26,6 +22,7 @@ public class Mandelbrot extends Application {
     double offsetY;
     int x = 0;
     int y = 0;
+    
     static final int THREADS = 16;//Parameter
     final double ITERATIONSINCREASERATE = 1.2;//Parameter
     double iterations = 20;//Parameter
